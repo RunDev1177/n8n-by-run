@@ -1,0 +1,711 @@
+{
+  "name": "FX Gold Analyze",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4,
+              "triggerAtMinute": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1056,
+        96
+      ],
+      "id": "8670804b-67e5-4ed2-b01a-aa127000b17d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "-1003587927590",
+        "file": "={{ $(\"Summary\").item.json.images.find(item => item.timeframe == \"H4\").url }}",
+        "additionalFields": {
+          "caption": "={{ $('Handle with Previous').item.json.content.parts[0].text }}",
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2672,
+        208
+      ],
+      "id": "2192051b-8728-4ba2-a506-1b1b125bf80d",
+      "name": "Send H4 Analyze",
+      "webhookId": "e20113cd-a83a-41a5-b5ee-ada3e1abea8a",
+      "credentials": {
+        "telegramApi": {
+          "id": "rPxnXjHRtoZJkj36",
+          "name": "EA&Ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "qOpEMaPeskREh4JT",
+          "mode": "list",
+          "cachedResultName": "FX Sync",
+          "cachedResultUrl": "/projects/OmF2lntdNkLbn7OQ/datatables/qOpEMaPeskREh4JT"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "1"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -48,
+        80
+      ],
+      "id": "6ae8a95d-eaeb-46a5-aea4-f845dd7e8ba8",
+      "name": "Store"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "=[System Prompt]\nYou are an algorithmic execution AI. You will analyze two charts simultaneously: H4 and H1.\nYour task is to determine the trend for both, check for confluence, and identify exact Supply/Demand zones.\n\nTrend Codes:\n1 = Uptrend (Bullish)\n2 = Downtrend (Bearish)\n0 = Sideways (Ranging or Unclear)\n\nRules for Entry:\n- If H4 is 1 AND H1 is 1 -> Look for a DEMAND ZONE on H1.\n- If H4 is 2 AND H1 is 2 -> Look for a SUPPLY ZONE on H1.\n- If they do NOT match (e.g., 1 and 2), or if either is 0 -> NO TRADE (Output 0 for Confluence).\n\nInput: Two chart images (H4 and H1).\n\nAnalyze Information:\n{{ $('Store').item.json.D1_Weekly }}\n\nCRITICAL INSTRUCTION: Output ONLY in the plain text format below. Use exact numbers for prices. If Confluence is 0, put N/A for the prices.\n\nOutput Format:\nH4_TREND: [1, 2, or 0]\nH1_TREND: [1, 2, or 0]\nCONFLUENCE: [1, 2, or 0]\nZONE_TYPE: [DEMAND, SUPPLY, or NONE]\nENTRY_PRICE: [The price exactly at the start of the zone]\nZONE_EDGE_PRICE: [The price at the extreme edge/invalidation point of the zone]\nSL_PRICE: [Calculate: If Demand, ZONE_EDGE_PRICE minus 300 points. If Supply, ZONE_EDGE_PRICE plus 300 points]\nTP1: [Calculate 1:1 Risk:Reward based on Entry and SL]\nTP2: [Calculate 1:1.5 Risk:Reward]\nTP3: [Calculate 1:2 Risk:Reward]\nANALYZE_DETAIL: [Analyze data in Thai language]",
+        "imageUrls": "={{ $json.images.filter(item => item.timeframe == \"H4\" || item.timeframe == \"H1\").map(data => data.url).join(\",\") }}",
+        "options": {
+          "maxOutputTokens": 4000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        112
+      ],
+      "id": "28a04397-7002-4ef5-a965-2d41a00d80a9",
+      "name": "H4 Analyze",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "13SUOqvodHNiJ8VZ",
+          "name": "Sing API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://fxsync.ezy-journey.com/api/summary",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{ \"x-api-key\": \"fx_7dbf211fdc23c3ac958f77cacabc8d8fd633d74070a5ef46fcdc76616796569f\" }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        272,
+        96
+      ],
+      "id": "0df42167-6dc5-40c8-813e-589edc2692fc",
+      "name": "Summary"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "qOpEMaPeskREh4JT",
+          "mode": "list",
+          "cachedResultName": "FX Sync",
+          "cachedResultUrl": "/projects/OmF2lntdNkLbn7OQ/datatables/qOpEMaPeskREh4JT"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "1"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "H4_H1_Summary": "={{ $json.content.parts[0].text }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "D1_Weekly",
+              "displayName": "D1_Weekly",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "News_Daily",
+              "displayName": "News_Daily",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "H4_H1_Summary",
+              "displayName": "H4_H1_Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1056,
+        -144
+      ],
+      "id": "52135e76-2b45-4253-a3de-6b8bb08ebe55",
+      "name": "Upsert row(s)"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3344,
+        -144
+      ],
+      "id": "8ac0d810-32ef-4909-ab5a-eea697e08298",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "-1003587927590",
+        "file": "={{ $(\"Summary\").item.json.images.find(item => item.timeframe == \"H1\").url }}",
+        "additionalFields": {
+          "disable_notification": true,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2448,
+        208
+      ],
+      "id": "17b1c9ea-eed4-49fe-a13f-d2f634419be7",
+      "name": "Send H1 Photo",
+      "webhookId": "e20113cd-a83a-41a5-b5ee-ada3e1abea8a",
+      "credentials": {
+        "telegramApi": {
+          "id": "rPxnXjHRtoZJkj36",
+          "name": "EA&Ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ตัวอย่าง Code Node ใน n8n เพื่อตัด String ให้อยู่ในรูปตัวแปร\nconst text = $input.first().json.content.parts[0].text;\n\nreturn {\n  h4_trend: text.match(/H4_TREND:\\s*(.*)/)[1],\n  h1_trend: text.match(/H1_TREND:\\s*(.*)/)[1],\n  confluence: text.match(/CONFLUENCE:\\s*(.*)/)[1],\n  zone_type: text.match(/ZONE_TYPE:\\s*(.*)/)[1],\n  entry_price: text.match(/ENTRY_PRICE:\\s*(.*)/)[1],\n  sl_price: text.match(/SL_PRICE:\\s*(.*)/)[1],\n  tp1_price: text.match(/TP1:\\s*(.*)/)[1],\n  tp2_price: text.match(/TP2:\\s*(.*)/)[1],\n  tp3_price: text.match(/TP3:\\s*(.*)/)[1],\n  analyze_detail: text.match(/ANALYZE_DETAIL:\\s*(.*)/)[1]\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        224
+      ],
+      "id": "90ce6d0d-1fb5-4cc2-aedf-bcad055a895b",
+      "name": "Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e26ee596-5028-4ce8-a439-6434d8ad94ae",
+              "leftValue": "={{ $json.confluence }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "fef86203-9719-4df7-849a-13f32ebad83b",
+              "leftValue": "={{ $json.confluence }}",
+              "rightValue": "2",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1264,
+        224
+      ],
+      "id": "4ce5b4e2-5ee2-4541-859c-25a0e6b3e80e",
+      "name": "Has Trend"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        528
+      ],
+      "id": "7f97e903-7853-49f9-a94d-5b9ef8d8a0d3",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// รับค่าเวลาปัจจุบัน และปรับให้อยู่ใน Timezone Asia/Bangkok (+07:00)\nconst now = new Date(new Date().toLocaleString('en-US', {timeZone: 'Asia/Bangkok'}));\nconst day = now.getDay(); // 0 = อาทิตย์, 1 = จันทร์, ..., 6 = เสาร์\nconst hour = now.getHours();\n\nlet isMarketOpen = true;\n\n// เช็คเงื่อนไขวันหยุดตลาด Forex (เวลาไทย)\nif (day === 0) {\n  // วันอาทิตย์ = ปิดทั้งวัน\n  isMarketOpen = false;\n} else if (day === 6 && hour >= 4) {\n  // วันเสาร์ ตั้งแต่ 04:00 น. เป็นต้นไป = ปิด\n  isMarketOpen = false;\n} else if (day === 1 && hour < 4) {\n  // วันจันทร์ ก่อน 04:00 น. = ปิด\n  isMarketOpen = false;\n}\n\nreturn {\n  isMarketOpen: isMarketOpen,\n  currentDay: day,\n  currentHour: hour,\n  status: isMarketOpen ? 'OPEN' : 'CLOSED'\n};\n"
+      },
+      "id": "c914e6ad-a640-4b78-b0e7-0159dc42722b",
+      "name": "Check Forex Market Hours",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        96
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        176,
+        448
+      ],
+      "id": "a5811cb2-aa68-4fa5-8c3c-c98f3447d61e",
+      "name": "No Operation, do nothing2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "75f502ff-b720-4823-a47e-83b490d846bc",
+              "leftValue": "={{ $json.isMarketOpen }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -448,
+        96
+      ],
+      "id": "f75d6d9c-d4fd-4b43-b0ea-0b2d3477d0b2",
+      "name": "Check Market IsOpen"
+    },
+    {
+      "parameters": {
+        "table": {
+          "__rl": true,
+          "value": "signal_ai",
+          "mode": "list",
+          "cachedResultName": "signal_ai"
+        },
+        "dataMode": "defineBelow",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "zone",
+              "value": "={{ $('Parser').item.json.zone_type }}"
+            },
+            {
+              "column": "Enter",
+              "value": "={{ $('Parser').item.json.entry_price }}"
+            },
+            {
+              "column": "SL",
+              "value": "={{ $('Parser').item.json.sl_price }}"
+            },
+            {
+              "column": "TP1",
+              "value": "={{ $('Parser').item.json.tp1_price }}"
+            },
+            {
+              "column": "TP2",
+              "value": "={{ $('Parser').item.json.tp2_price }}"
+            },
+            {
+              "column": "TP3",
+              "value": "={{ $('Parser').item.json.tp3_price }}"
+            }
+          ]
+        },
+        "options": {
+          "skipOnConflict": true
+        }
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        2992,
+        208
+      ],
+      "id": "88f853e5-d1d3-41c7-8b9f-b2783d358f2b",
+      "name": "Add Signal",
+      "credentials": {
+        "mySql": {
+          "id": "t0UGoQ1DYIiCH3Z6",
+          "name": "MySQL Docker"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM signal_ai \nWHERE createdAt >= NOW() - INTERVAL 30 DAY;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1696,
+        208
+      ],
+      "id": "44d9e43d-5074-42ee-92c3-cf8c9281ede8",
+      "name": "Get Existing Signal",
+      "credentials": {
+        "mySql": {
+          "id": "t0UGoQ1DYIiCH3Z6",
+          "name": "MySQL Docker"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Here is Previous Signal:\n{{ JSON.stringify($('Get Existing Signal').item.json) }}\n\nZone SZ = Supply\nZone DZ = Demand\n\nHere is H4 H1 Analyze:\n{{ $('H4 Analyze').item.json.content.parts[0].text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "=[System Prompt]\nYou are the Final Signal Formatter and Deduplication Checker. Your job is to take the raw data from the H4 & H1 Analyze Agent, check if it's a duplicate of a previously alerted zone, and format it perfectly for a Telegram message.\n\nInput Data Provided by User:\n1. H4_TREND (1, 2, or 0)\n2. H1_TREND (1, 2, or 0)\n3. ENTRY_PRICE\n4. SL_PRICE, TP1, TP2, TP3\n5. LAST_ALERTED_PRICE (The entry price of the last signal sent, retrieved from the database).\n\nCRITICAL RULES & LOGIC:\n1. Trend Mapping:\n   - If 1: Convert to \"UP\". Order type is \"Buy Limit\".\n   - If 2: Convert to \"DOWN\". Order type is \"Sell Limit\".\n   - If 0 or if H4 and H1 do not match (e.g., 1 and 2): You MUST output exactly the word: IGNORE_NO_TREND\n2. Deduplication Check: \n   - If the current ENTRY_PRICE is exactly the same as the LAST_ALERTED_PRICE, you MUST output exactly the word: IGNORE_DUPLICATE\n3. Output Formatting: If the trends match AND it is NOT a duplicate, you MUST output ONLY the exact format below. Do not add any conversational text.\n\nOutput Format (Exact Match Required):\n==================\nH4 : [UP/DOWN] | H1 : [UP/DOWN]\n[Buy Limit / Sell Limit] [ENTRY_PRICE]\nSL [SL_PRICE]\nTP1 [TP1]\nTP2 [TP2]\nTP3 [TP3]\n==================="
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        2080,
+        208
+      ],
+      "id": "e14d6223-f212-4843-8ff2-86faf63e523b",
+      "name": "Handle with Previous",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "13SUOqvodHNiJ8VZ",
+          "name": "Sing API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "={{ $(\"Summary\").item.json.images.find(item => item.timeframe == \"H1\").url }}",
+        "options": {},
+        "files": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        2448,
+        0
+      ],
+      "id": "afa69f9b-fe1b-4fd5-af0c-890d9778acdf",
+      "name": "Discord",
+      "webhookId": "0de7849e-ec16-46e7-9191-849d2b4eb182",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "6ywz9uMR2dwDPWwc",
+          "name": "Discord SIG"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Forex Market Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send H4 Analyze": {
+      "main": [
+        [
+          {
+            "node": "Add Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "H4 Analyze": {
+      "main": [
+        [
+          {
+            "node": "Upsert row(s)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary": {
+      "main": [
+        [
+          {
+            "node": "H4 Analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert row(s)": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send H1 Photo": {
+      "main": [
+        [
+          {
+            "node": "Send H4 Analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser": {
+      "main": [
+        [
+          {
+            "node": "Has Trend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Trend": {
+      "main": [
+        [
+          {
+            "node": "Get Existing Signal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Forex Market Hours": {
+      "main": [
+        [
+          {
+            "node": "Check Market IsOpen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Market IsOpen": {
+      "main": [
+        [
+          {
+            "node": "Store",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Signal": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing Signal": {
+      "main": [
+        [
+          {
+            "node": "Handle with Previous",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle with Previous": {
+      "main": [
+        [
+          {
+            "node": "Send H1 Photo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Bangkok",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "defb188d-a0f0-4555-bdae-ed2a39fc39c0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0a7cc00dc0abb606b48332582a08c146adf1df47d6ac3e4cff394116bc8b7ac4"
+  },
+  "id": "KM6EJu3zDqoZSz7BPaqqL",
+  "tags": [
+    {
+      "updatedAt": "2026-03-25T06:49:19.499Z",
+      "createdAt": "2026-03-25T06:49:19.499Z",
+      "id": "Kx2KV1e4v0yZClrW",
+      "name": "fx-sync"
+    }
+  ]
+}

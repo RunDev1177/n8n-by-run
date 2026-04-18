@@ -1,0 +1,312 @@
+{
+  "name": "Weekly D1 Analyze",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -528,
+        144
+      ],
+      "id": "994f219a-6253-42db-b624-9bf38499eba2",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "-1003587927590",
+        "file": "={{ $(\"Summary\").item.json.images.find(item => item.timeframe == \"D1\").url }}",
+        "additionalFields": {
+          "caption": "={{ $json.content.parts[0].text }}",
+          "disable_notification": true
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        144,
+        144
+      ],
+      "id": "36fa015c-376c-43cb-b579-eea05aa0a4c4",
+      "name": "Send D1 Analyze",
+      "webhookId": "e20113cd-a83a-41a5-b5ee-ada3e1abea8a",
+      "credentials": {
+        "telegramApi": {
+          "id": "rPxnXjHRtoZJkj36",
+          "name": "EA&Ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "[System Prompt]\nYou are a Master Swing Trader. Your job is to analyze the provided Daily (D1) chart and provide a weekly outlook.\nIdentify the major trend, key liquidity levels, and what to expect for the upcoming week.\n\nInput: A single D1 chart image.\n\nOutput Format (Plain Text for easy reading):\nWEEKLY_TREND: [Bullish / Bearish / Sideways]\nKEY_LEVELS: [List 2-3 major Support/Resistance or Supply/Demand zones to watch]\nSCENARIO_1: [What happens if price continues the trend?]\nSCENARIO_2: [What happens if price reverses or pulls back?]\nCONCLUSION: [1 sentence summarizing the weekly bias]",
+        "imageUrls": "={{ $json.images.find(item => item.timeframe == \"D1\").url }}",
+        "options": {
+          "maxOutputTokens": 4000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -96,
+        144
+      ],
+      "id": "351de15c-c75c-470f-828e-ade27d1fe76e",
+      "name": "D1 Analyze",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "13SUOqvodHNiJ8VZ",
+          "name": "Sing API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "qOpEMaPeskREh4JT",
+          "mode": "list",
+          "cachedResultName": "FX Sync",
+          "cachedResultUrl": "/projects/OmF2lntdNkLbn7OQ/datatables/qOpEMaPeskREh4JT"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "1"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "D1_Weekly": "={{ $json.content.parts[0].text }}"
+          },
+          "matchingColumns": [
+            "D1_Weekly"
+          ],
+          "schema": [
+            {
+              "id": "D1_Weekly",
+              "displayName": "D1_Weekly",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "News_Daily",
+              "displayName": "News_Daily",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "H4_H1_Summary",
+              "displayName": "H4_H1_Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        144,
+        -32
+      ],
+      "id": "d1f3120f-077e-489d-a1a5-6fe8925a5e50",
+      "name": "Upsert row(s)"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        464,
+        144
+      ],
+      "id": "14a2daf9-2e9c-485f-9340-8a7ad4d65065",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "url": "https://fxsync.ezy-journey.com/api/summary",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{ \"x-api-key\": \"fx_7dbf211fdc23c3ac958f77cacabc8d8fd633d74070a5ef46fcdc76616796569f\" }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -336,
+        144
+      ],
+      "id": "3efaa590-818a-426f-ae80-86d8af6858a9",
+      "name": "Summary"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "={{ $(\"Summary\").item.json.images.find(item => item.timeframe == \"D1\").url }}",
+        "options": {},
+        "files": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        144,
+        336
+      ],
+      "id": "29462a77-a175-4569-b9fa-7da47b415b6c",
+      "name": "Discord",
+      "webhookId": "0de7849e-ec16-46e7-9191-849d2b4eb182",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "6ywz9uMR2dwDPWwc",
+          "name": "Discord SIG"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send D1 Analyze": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "D1 Analyze": {
+      "main": [
+        [
+          {
+            "node": "Send D1 Analyze",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upsert row(s)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert row(s)": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary": {
+      "main": [
+        [
+          {
+            "node": "D1 Analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Bangkok",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "75ee2e6e-dbcb-4f47-bb29-e1aa8ef547ab",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0a7cc00dc0abb606b48332582a08c146adf1df47d6ac3e4cff394116bc8b7ac4"
+  },
+  "id": "1h8-zqh0I2BXPn_CGyeF4",
+  "tags": [
+    {
+      "updatedAt": "2026-03-25T06:49:19.499Z",
+      "createdAt": "2026-03-25T06:49:19.499Z",
+      "id": "Kx2KV1e4v0yZClrW",
+      "name": "fx-sync"
+    }
+  ]
+}

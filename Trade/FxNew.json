@@ -1,0 +1,942 @@
+{
+  "name": "FxNew",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// ดึงข้อมูลทั้งหมดที่ส่งเข้ามา (มักจะเป็น Array ของ Objects)\nconst items = $input.all();\n\n// ใช้ .map() เพื่อสร้าง Array ใหม่ที่ผ่านการแปลงวันที่แล้ว\nconst result = items.map(item => {\n  const isoDate = item.json.date;\n  \n  if (!isoDate) return item; // ป้องกัน Error กรณีไม่มีข้อมูลวันที่\n\n  const date = new Date(isoDate);\n\n  // ใช้ sv-SE เพื่อให้ได้ฟอร์แมต YYYY-MM-DD HH:mm:ss\n  const formatted = date.toLocaleString(\"sv-SE\", {\n    timeZone: \"Asia/Bangkok\",\n  });\n\n  // แยก Date และ Time\n  const [datePart, timePart] = formatted.split(\" \");\n\n  return {\n    json: {\n      ...item.json,    // เก็บข้อมูลเดิมไว้ทั้งหมด\n      Date: datePart, // เพิ่มคอลัมน์ Date\n      Time: timePart  // เพิ่มคอลัมน์ Time\n    }\n  };\n});\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        208
+      ],
+      "id": "bd59dc3f-3189-4710-818d-72324c43b03d",
+      "name": "Thai Date"
+    },
+    {
+      "parameters": {
+        "url": "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        48,
+        -16
+      ],
+      "id": "ff3b2261-3920-4b7d-adc6-9e6e28ff373c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        448
+      ],
+      "id": "d5a5a7dc-649f-4e79-b334-14c472adf4ab",
+      "name": "Day"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "fxnewsdb",
+          "mode": "list",
+          "cachedResultName": "fxnewsdb"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $json.date }}",
+            "country": "={{ $json.country }}",
+            "impact": "={{ $json.impact }}",
+            "title": "={{ $json.title }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "country",
+              "displayName": "country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "impact",
+              "displayName": "impact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        272,
+        -16
+      ],
+      "id": "386a5c12-378e-4d37-8810-c87017ce0ae1",
+      "name": "Insert News",
+      "credentials": {
+        "postgres": {
+          "id": "vysMzyS51P9EB4rk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "thfxnewsdb",
+          "mode": "list",
+          "cachedResultName": "thfxnewsdb"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $json.Date }}",
+            "Th-Time": "={{ $json.Time }}",
+            "currency": "={{ $json.country }}",
+            "impact": "={{ $json.impact }}",
+            "title": "={{ $json.title }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Th-Time",
+              "displayName": "Th-Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "currency",
+              "displayName": "currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "impact",
+              "displayName": "impact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        496,
+        208
+      ],
+      "id": "2071639c-e7dd-40b8-8e04-4be9173ea288",
+      "name": "Insert Thai Time News",
+      "credentials": {
+        "postgres": {
+          "id": "vysMzyS51P9EB4rk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "thfxnewsdb",
+          "mode": "list",
+          "cachedResultName": "thfxnewsdb"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        48,
+        880
+      ],
+      "id": "f47cb046-c46d-4550-801b-a1c6846fc1f4",
+      "name": "Select rows from a table1",
+      "credentials": {
+        "postgres": {
+          "id": "vysMzyS51P9EB4rk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "thfxnewsdb",
+          "mode": "list",
+          "cachedResultName": "thfxnewsdb"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        272,
+        880
+      ],
+      "id": "52f78113-bff4-4bbb-a80a-4873a791f5f5",
+      "name": "Delete table or rows1",
+      "credentials": {
+        "postgres": {
+          "id": "vysMzyS51P9EB4rk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                5
+              ],
+              "triggerAtHour": 23,
+              "triggerAtMinute": 55
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        784
+      ],
+      "id": "77d4aefa-bc00-40f0-a7c0-09a8b0acf542",
+      "name": "END Weeks"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        -16
+      ],
+      "id": "9197904c-3c9c-43b7-becd-d8bf0ce816c0",
+      "name": "Start Weeks"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "fxnewsdb",
+          "mode": "list",
+          "cachedResultName": "fxnewsdb"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        48,
+        688
+      ],
+      "id": "2923fbd6-770b-46f9-8834-ed303fa8e085",
+      "name": "Select New ",
+      "credentials": {
+        "postgres": {
+          "id": "vysMzyS51P9EB4rk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "fxnewsdb",
+          "mode": "list",
+          "cachedResultName": "fxnewsdb"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        272,
+        688
+      ],
+      "id": "eda19d4f-3a15-4707-820e-f429f631631d",
+      "name": "Delete table or rows",
+      "credentials": {
+        "postgres": {
+          "id": "vysMzyS51P9EB4rk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 6,
+              "triggerAtMinute": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        208
+      ],
+      "id": "34e4ab34-90cb-4e8e-9547-228a5f345696",
+      "name": "Start Weeks1"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "fxnewsdb",
+          "mode": "list",
+          "cachedResultName": "fxnewsdb"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        48,
+        208
+      ],
+      "id": "021a543c-fef0-4ccf-a9e1-55605de3058e",
+      "name": "Select Weeks New",
+      "credentials": {
+        "postgres": {
+          "id": "vysMzyS51P9EB4rk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "thfxnewsdb",
+          "mode": "list",
+          "cachedResultName": "thfxnewsdb"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        48,
+        448
+      ],
+      "id": "4369418a-33d0-4f6a-8c66-0c1b13ecd6de",
+      "name": "Select rows from a table",
+      "credentials": {
+        "postgres": {
+          "id": "vysMzyS51P9EB4rk",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.currency }}",
+                    "rightValue": "USD",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "48af4263-7b9c-4831-ae44-db0081b0d436"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "USD"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6b83f2b3-a109-44de-b7da-932cebc180be",
+                    "leftValue": "={{ $json.currency }}",
+                    "rightValue": "JPY",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "JPY"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "07ec9b13-9490-488e-a013-03ae35803cd4",
+                    "leftValue": "={{ $json.currency }}",
+                    "rightValue": "EUR",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "EUR"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        272,
+        432
+      ],
+      "id": "67d2031a-e7a7-4736-b722-d94c69affb65",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. ดึงวันที่ปัจจุบันและแปลงให้อยู่ในรูปแบบ YYYY-MM-DD\nconst today = new Date().toISOString().split('T')[0]; \n\nconst results = [];\n\nfor (const item of $input.all()) {\n  // 2. ตรวจสอบว่า Date ในข้อมูล (เช่น \"2026-04-13\") ตรงกับวันนี้หรือไม่\n  if (item.json.Date === today) {\n    // 3. เพิ่มฟิลด์ใหม่\n    item.json.myNewField = 1;\n    results.push(item);\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        448
+      ],
+      "id": "6b5f97f1-b3d7-4571-b9ee-01776f5e41c3",
+      "name": "Today USD"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "={{ $json.Date }} -> {{ $json['Th-Time'] }}\n{{ $json.title }}\n**{{ $json['th-title'] }}\n=============================",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        448
+      ],
+      "id": "e9f897d7-9db9-4ee2-82f8-65f1b711ad10",
+      "name": "Discord",
+      "webhookId": "d4e8ad97-a128-4b84-bc1b-6c0a73eb7e68",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "6ywz9uMR2dwDPWwc",
+          "name": "Discord SIG"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "74b86b77-1908-403c-8bfb-2fe3216617c2",
+              "leftValue": "={{ $json.impact }}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        496,
+        448
+      ],
+      "id": "fdaf3adf-bfc4-4962-b68b-ae86b3c7433a",
+      "name": "If impact"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b2fdd737-f652-4ebd-b32d-1f98ec1f283a",
+              "name": "Date",
+              "value": "={{ $('If impact').item.json.Date }}",
+              "type": "string"
+            },
+            {
+              "id": "8c2c7c3e-9d16-4225-9a99-f2ab9191fb68",
+              "name": "Th-Time",
+              "value": "={{ $('If impact').item.json['Th-Time'] }}",
+              "type": "string"
+            },
+            {
+              "id": "1a5e7c5b-a7df-41f1-9406-5f673161d937",
+              "name": "title",
+              "value": "={{ $('If impact').item.json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d313a1fc-8ef5-485d-8b67-b56e68b40099",
+              "name": "th-title",
+              "value": "={{ $json['th-title'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1392,
+        448
+      ],
+      "id": "30dc7b77-7e54-4ff0-84e8-8cec4e95d731",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5c53f3d8-2920-457c-9fae-c26f55fa5ebd",
+              "leftValue": "={{ $json.title }}",
+              "rightValue": "={{ $('Select rows from a table').item.json.title }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1168,
+        448
+      ],
+      "id": "7221b7f9-bc5a-4afb-9234-a3784ae864a1",
+      "name": "If",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "https://script.google.com/macros/s/AKfycbwN1m5Kulp9qbn_XTuHywFdqWTcRKGjhvrPd5hH1ZUWUOWutFi9p69QL3Gics3JfYZR_w/exec",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        944,
+        448
+      ],
+      "id": "9100c3d6-7721-4af7-a493-eccaa63ef097",
+      "name": "HTTP Request Google App Script"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Thai Date": {
+      "main": [
+        [
+          {
+            "node": "Insert Thai Time News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Insert News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Day": {
+      "main": [
+        [
+          {
+            "node": "Select rows from a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert News": {
+      "main": [
+        []
+      ]
+    },
+    "Select rows from a table1": {
+      "main": [
+        [
+          {
+            "node": "Delete table or rows1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Weeks": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "END Weeks": {
+      "main": [
+        [
+          {
+            "node": "Select New ",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Select rows from a table1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select New ": {
+      "main": [
+        [
+          {
+            "node": "Delete table or rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Weeks1": {
+      "main": [
+        [
+          {
+            "node": "Select Weeks New",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Weeks New": {
+      "main": [
+        [
+          {
+            "node": "Thai Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "If impact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Today USD": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Google App Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If impact": {
+      "main": [
+        [
+          {
+            "node": "Today USD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Google App Script": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Bangkok",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "0a618a56-dead-4b95-90d6-cbc9dc538319",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0a7cc00dc0abb606b48332582a08c146adf1df47d6ac3e4cff394116bc8b7ac4"
+  },
+  "id": "oFrFXBpKh720Xs7NzNfvs",
+  "tags": []
+}
